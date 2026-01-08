@@ -3,38 +3,44 @@ pipeline {
 
     environment {
         DOCKERHUB_CREDS = credentials('dockerhub-creds')
-        DOCKERHUB_USER  = 'kiransuresh12'
+        DOCKER_USER = 'kiransuresh12'
     }
 
     stages {
 
-        stage('Build & Push Docker Image') {
+        stage('Build Docker Image') {
+            steps {
+                sh '''
+                  chmod +x build/build.sh
+                  cd build
+                  ./build.sh
+                '''
+            }
+        }
+
+        stage('Push to Docker Hub') {
             steps {
                 script {
-                    if (env.BRANCH_NAME == 'dev') {
+                    def branch = env.BRANCH_NAME ?: env.GIT_BRANCH.replace('origin/', '')
 
+                    sh '''
+                      echo $DOCKERHUB_CREDS_PSW | docker login -u $DOCKERHUB_CREDS_USR --password-stdin
+                    '''
+
+                    if (branch == 'dev') {
                         sh '''
-                          echo "Building DEV image"
-                          echo $DOCKERHUB_CREDS_PSW | docker login -u $DOCKERHUB_CREDS_USR --password-stdin
-
-                          chmod +x build/build.sh
-                          cd build
-                          ./build.sh dev
+                          docker tag react-app:latest kiransuresh12/react-app-dev:latest
+                          docker push kiransuresh12/react-app-dev:latest
                         '''
-
-                    } else if (env.BRANCH_NAME == 'main' || env.BRANCH_NAME == 'master') {
-
+                    } 
+                    else if (branch == 'main') {
                         sh '''
-                          echo "Building PROD image"
-                          echo $DOCKERHUB_CREDS_PSW | docker login -u $DOCKERHUB_CREDS_USR --password-stdin
-
-                          chmod +x build/build.sh
-                          cd build
-                          ./build.sh prod
+                          docker tag react-app:latest kiransuresh12/react-app-prod:latest
+                          docker push kiransuresh12/react-app-prod:latest
                         '''
-
-                    } else {
-                        echo "Branch not handled: ${env.BRANCH_NAME}"
+                    } 
+                    else {
+                        echo "Branch not supported: ${branch}"
                     }
                 }
             }
@@ -43,7 +49,20 @@ pipeline {
         stage('Deploy') {
             steps {
                 script {
-                    if (env.BRANCH_NAME == 'dev') {
+                    def branch = env.BRANCH_NAME ?: env.GIT_BRANCH.replace('origin/', '')
 
-                        sh '''
-                          echo "Deploying DEV enviro
+                    sh '''
+                      chmod +x build/deploy.sh
+                    '''
+
+                    if (branch == 'dev') {
+                        sh 'cd build && ./deploy.sh dev'
+                    } 
+                    else if (branch == 'main') {
+                        sh 'cd build && ./deploy.sh prod'
+                    }
+                }
+            }
+        }
+    }
+}
