@@ -4,4 +4,9 @@ services:
     container_name: react-app-dev
     ports:
       - "80:80"
-    restart: always
+
+  react-app-prod:
+    image: kiransuresh12/react-app-prod:latest
+    container_name: react-app-prod
+    ports:
+      - "8080:80"
