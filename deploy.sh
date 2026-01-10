@@ -1,10 +1,7 @@
-#!/bin/bash
 ENV=$1
 
-APP_NAME="react-app-$ENV"
-
-echo "Starting deployment for environment: $ENV"
-
-docker rm -f $APP_NAME || true
-
-docker-compose up -d
+if [ "$ENV" == "prod" ]; then
+  docker-compose -f docker-compose.yml up -d react-app-prod
+else
+  docker-compose -f docker-compose.yml up -d react-app-dev
+fi
