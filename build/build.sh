@@ -7,6 +7,6 @@ if [ -z "$ENV" ]; then
   exit 1
 fi
 
-echo "Building React Docker Image for $ENV"
+echo "Building Docker image for $ENV"
 
 docker build -t react-app:latest .
