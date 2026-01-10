@@ -2,68 +2,43 @@ pipeline {
     agent any
 
     environment {
-        DOCKERHUB_CREDS = credentials('dockerhub-creds')
+        DOCKERHUB = credentials('dockerhub-creds')
         DOCKER_USER = 'kiransuresh12'
         IMAGE_NAME = 'react-app'
     }
 
     stages {
 
+        stage('Checkout') {
+            steps {
+                checkout scm
+            }
+        }
+
         stage('Build Docker Image') {
             steps {
-                script {
-                    def branch = env.BRANCH_NAME ?: env.GIT_BRANCH.replace('origin/', '')
-
-                    sh 'chmod +x build/build.sh'
-
-                    if (branch == 'dev') {
-                        sh 'cd build && ./build.sh dev'
-                    } else if (branch == 'main') {
-                        sh 'cd build && ./build.sh prod'
-                    } else {
-                        error "Unsupported branch: ${branch}"
-                    }
-                }
+                sh '''
+                  chmod +x build/build.sh
+                  cd build
+                  ./build.sh dev
+                '''
             }
         }
 
-        stage('Push to Docker Hub') {
+        stage('Docker Login') {
             steps {
-                script {
-                    def branch = env.BRANCH_NAME ?: env.GIT_BRANCH.replace('origin/', '')
-
-                    sh '''
-                      echo $DOCKERHUB_CREDS_PSW | docker login -u $DOCKERHUB_CREDS_USR --password-stdin
-                    '''
-
-                    if (branch == 'dev') {
-                        sh '''
-                          docker tag react-app:latest kiransuresh12/react-app-dev:latest
-                          docker push kiransuresh12/react-app-dev:latest
-                        '''
-                    } else if (branch == 'main') {
-                        sh '''
-                          docker tag react-app:latest kiransuresh12/react-app-prod:latest
-                          docker push kiransuresh12/react-app-prod:latest
-                        '''
-                    }
-                }
+                sh '''
+                  echo $DOCKERHUB_PSW | docker login -u $DOCKERHUB_USR --password-stdin
+                '''
             }
         }
 
-        stage('Deploy') {
+        stage('Push Image') {
             steps {
-                script {
-                    def branch = env.BRANCH_NAME ?: env.GIT_BRANCH.replace('origin/', '')
-
-                    sh 'chmod +x build/deploy.sh'
-
-                    if (branch == 'dev') {
-                        sh 'cd build && ./deploy.sh dev'
-                    } else if (branch == 'main') {
-                        sh 'cd build && ./deploy.sh prod'
-                    }
-                }
+                sh '''
+                  docker tag react-app:latest kiransuresh12/react-app-dev:latest
+                  docker push kiransuresh12/react-app-dev:latest
+                '''
             }
         }
     }
@@ -77,4 +52,3 @@ pipeline {
         }
     }
 }
-``
