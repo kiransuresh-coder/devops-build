@@ -2,11 +2,13 @@ pipeline {
     agent any
 
     environment {
-        DOCKERHUB_CREDS = credentials('dockerhub-creds')
-        DOCKER_USER = 'kiransuresh12'
+        DOCKERHUB_USER = 'kiransuresh12'
+        IMAGE_NAME = 'react-app'
+        ENV = "${env.BRANCH_NAME == 'main' ? 'prod' : 'dev'}"
     }
 
     stages {
+
         stage('Checkout') {
             steps {
                 checkout scm
@@ -15,45 +17,35 @@ pipeline {
 
         stage('Build & Push Docker Image') {
             steps {
-                script {
-                    def branch = env.BRANCH_NAME ?: env.GIT_BRANCH.replace('origin/', '')
-                    def envArg
-                    if (branch == 'dev') {
-                        envArg = 'dev'
-                    } else if (branch == 'main') {
-                        envArg = 'prod'
-                    } else {
-                        error "Branch not supported: ${branch}"
-                    }
-
-                    // Login to Docker Hub
-                    sh "echo \$DOCKERHUB_CREDS_PSW | docker login -u \$DOCKERHUB_CREDS_USR --password-stdin"
-
-                    // Make scripts executable
-                    sh "chmod +x build.sh deploy.sh"
-
-                    // Run build.sh with proper environment
-                    sh "./build.sh ${envArg}"
+                withCredentials([usernamePassword(
+                    credentialsId: 'dockerhub-creds',
+                    usernameVariable: 'DOCKER_USER',
+                    passwordVariable: 'DOCKER_PASS'
+                )]) {
+                    sh '''
+                        echo "$DOCKER_PASS" | docker login -u "$DOCKER_USER" --password-stdin
+                        chmod +x build.sh deploy.sh
+                        ./build.sh $ENV
+                    '''
                 }
             }
         }
 
         stage('Deploy') {
             steps {
-                script {
-                    def branch = env.BRANCH_NAME ?: env.GIT_BRANCH.replace('origin/', '')
-                    def envArg
-                    if (branch == 'dev') {
-                        envArg = 'dev'
-                    } else if (branch == 'main') {
-                        envArg = 'prod'
-                    } else {
-                        error "Branch not supported: ${branch}"
-                    }
-
-                    sh "./deploy.sh ${envArg}"
-                }
+                sh '''
+                    ./deploy.sh $ENV
+                '''
             }
+        }
+    }
+
+    post {
+        success {
+            echo "✅ Deployment successful for environment: $ENV"
+        }
+        failure {
+            echo "❌ Pipeline failed"
         }
     }
 }
