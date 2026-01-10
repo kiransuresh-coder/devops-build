@@ -1,16 +1,10 @@
 #!/bin/bash
-
 ENV=$1
 
-if [ "$ENV" == "prod" ]; then
-  SERVICE="react-app-prod"
-else
-  SERVICE="react-app-dev"
-fi
+APP_NAME="react-app-$ENV"
 
 echo "Starting deployment for environment: $ENV"
 
-docker rm -f react-app-dev || true
-docker rm -f react-app-prod || true
+docker rm -f $APP_NAME || true
 
-docker-compose up -d $SERVICE
+docker-compose up -d
