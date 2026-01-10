@@ -7,7 +7,7 @@ if [ -z "$ENV" ]; then
   exit 1
 fi
 
-IMAGE_NAME=kiran/react-app-$ENV
+IMAGE_NAME=kiransuresh12/react-app-$ENV
 
 echo "Building React app..."
 npm install
