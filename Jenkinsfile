@@ -3,7 +3,7 @@ pipeline {
 
     environment {
         DOCKER_USERNAME = 'kiransuresh12'
-        DOCKER_CREDS    = credentials('dockerhub-creds')
+        DOCKER_CREDS = credentials('dockerhub-creds')
     }
 
     stages {
@@ -23,4 +23,11 @@ pipeline {
                         env.DEPLOY_ENV = 'dev'
                     }
                 }
-                echo "Deploying to environment: ${env.DEPLO
+                echo "Deploying to environment: ${env.DEPLOY_ENV}"
+            }
+        }
+
+        stage('Docker Login') {
+            steps {
+                sh '''
+                    echo "$DOCKER_CREDS_PSW" | docker login \
