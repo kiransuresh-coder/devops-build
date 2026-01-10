@@ -1,12 +1,14 @@
+version: '3.8'
+
 services:
   react-app-dev:
-    image: kiransuresh12/react-app-dev:latest
+    image: kiransuresh12/react-app-dev
     container_name: react-app-dev
     ports:
       - "80:80"
 
   react-app-prod:
-    image: kiransuresh12/react-app-prod:latest
+    image: kiransuresh12/react-app-prod
     container_name: react-app-prod
     ports:
-      - "8080:80"
+      - "81:80"
