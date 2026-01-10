@@ -1,19 +1,24 @@
 #!/bin/bash
+ENV=$1
 
-ENV=$1   # dev or prod
+echo "Starting deployment for environment: $ENV"
 
-if [ -z "$ENV" ]; then
-  echo "Usage: ./deploy.sh dev|prod"
-  exit 1
+# Stop & remove any old container (dev or prod)
+if docker ps -q -f name=my-react-dev; then
+  echo "Stopping my-react-dev..."
+  docker stop my-react-dev
+  docker rm my-react-dev
 fi
 
-export ENVIRONMENT=$ENV
+if docker ps -q -f name=my-react-prod; then
+  echo "Stopping my-react-prod..."
+  docker stop my-react-prod
+  docker rm my-react-prod
+fi
 
-echo "Deploying environment: $ENV"
+# Run new container with docker-compose
+echo "Launching my-react-$ENV..."
+ENVIRONMENT=$ENV docker-compose up -d --build
 
-docker-compose down
-docker-compose pull
-docker-compose up -d
-
-echo "Deployment completed for $ENV"
+# Verify container is running
 docker ps -f name=my-react-$ENV
