@@ -2,7 +2,8 @@ pipeline {
     agent any
 
     environment {
-        DOCKER_USER = 'kiransuresh12'
+        DOCKER_USERNAME = 'kiransuresh12'
+        DOCKER_CREDS    = credentials('dockerhub-creds')
     }
 
     stages {
@@ -16,34 +17,10 @@ pipeline {
         stage('Set Environment') {
             steps {
                 script {
-                    if (env.BRANCH_NAME == 'main') {
-                        env.ENVIRONMENT = 'prod'
+                    if (env.BRANCH_NAME == 'main' || env.GIT_BRANCH == 'origin/main') {
+                        env.DEPLOY_ENV = 'prod'
                     } else {
-                        env.ENVIRONMENT = 'dev'
+                        env.DEPLOY_ENV = 'dev'
                     }
                 }
-                echo "Deploying to environment: ${ENVIRONMENT}"
-            }
-        }
-
-        stage('Build & Push Docker Image') {
-            steps {
-                withCredentials([string(credentialsId: 'dockerhub-creds', variable: 'DOCKER_PASS')]) {
-                    sh '''
-                    echo $DOCKER_PASS | docker login -u ${DOCKER_USER} --password-stdin
-                    chmod +x build.sh deploy.sh
-                    ./build.sh ${ENVIRONMENT}
-                    '''
-                }
-            }
-        }
-
-        stage('Deploy') {
-            steps {
-                sh '''
-                ./deploy.sh ${ENVIRONMENT}
-                '''
-            }
-        }
-    }
-}
+                echo "Deploying to environment: ${env.DEPLO
