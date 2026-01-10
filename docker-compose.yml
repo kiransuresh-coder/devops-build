@@ -1,9 +1,8 @@
 version: "3.8"
 
 services:
-  react-app:
-    image: kiransuresh12/react-app-${ENVIRONMENT}:latest
-    container_name: react-${ENVIRONMENT}
+  react-app-dev:
+    image: react-app-dev:latest  # use the local image built in Jenkins
+    container_name: react-app-dev
     ports:
       - "80:80"
-    restart: always
