@@ -1,22 +1,22 @@
 #!/bin/bash
 
-ENV=$1   # dev or prod
+ENV=$1
 
 if [ -z "$ENV" ]; then
   echo "Usage: ./build.sh dev|prod"
   exit 1
 fi
 
-IMAGE_NAME=kiran/react-app-$ENV
+echo "====================================="
+echo " Building React Docker Image"
+echo " Environment: $ENV"
+echo "====================================="
 
-echo "Building React app..."
-npm install
-npm run build
+docker build -t react-app:latest .
 
-echo "Building Docker image: $IMAGE_NAME"
-docker build -t $IMAGE_NAME:latest .
+if [ $? -ne 0 ]; then
+  echo "❌ Docker build failed"
+  exit 1
+fi
 
-echo "Pushing image to Docker Hub..."
-docker push $IMAGE_NAME:latest
-
-echo "Docker image $IMAGE_NAME pushed successfully"
+echo "✅ Docker image built successfully"
