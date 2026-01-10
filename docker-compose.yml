@@ -2,7 +2,7 @@ version: "3.8"
 
 services:
   react-app:
-    image: kiran/react-app-${ENVIRONMENT}:latest
+    image: kiransuresh12/react-app-${ENVIRONMENT}:latest
     container_name: react-${ENVIRONMENT}
     ports:
       - "80:80"
