@@ -31,7 +31,7 @@ pipeline {
 
                     // Build the Docker image using build.sh
                     sh """
-                        chmod +x build/build.sh
+                        chmod +x build.sh
                         cd build
                         ./build.sh ${envArg}
                     """
@@ -78,7 +78,7 @@ pipeline {
 
                     // Run deploy.sh
                     sh """
-                        chmod +x build/deploy.sh
+                        chmod +x deploy.sh
                         cd build
                         ./deploy.sh ${envArg}
                     """
