@@ -1,14 +1,9 @@
 #!/bin/bash
-
 ENV=$1
 
-if [ "$ENV" == "prod" ]; then
-  IMAGE="kiransuresh12/react-app-prod"
-else
-  IMAGE="kiransuresh12/react-app-dev"
-fi
+IMAGE_NAME="kiransuresh12/react-app-$ENV"
 
-echo "Building Docker image: $IMAGE"
+echo "Building Docker image: $IMAGE_NAME"
 
-docker build -t $IMAGE:latest .
-docker push $IMAGE:latest
+docker build -t $IMAGE_NAME .
+docker push $IMAGE_NAME
