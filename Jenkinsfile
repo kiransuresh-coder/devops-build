@@ -1,86 +1,69 @@
 pipeline {
-  agent any
+    agent any
 
-  environment {
-    DOCKERHUB = credentials('dockerhub-creds')
-    IMAGE_NAME = 'react-app'
-  }
-
-  stages {
-
-    stage('Checkout') {
-      steps {
-        checkout scm
-      }
+    environment {
+        DOCKERHUB_CREDS = credentials('dockerhub-creds')
+        DOCKERHUB_USER  = 'kiransuresh12'
     }
 
-    stage('Build Docker Image') {
-      steps {
-        sh '''
-          chmod +x build/build.sh
-          cd build
-          ./build.sh
-        '''
-      }
-    }
+    stages {
 
-    stage('Push to DockerHub') {
-      steps {
-        script {
-          def branch = env.GIT_BRANCH?.replaceFirst(/^origin\\//, '')
+        stage('Build & Push Docker Image') {
+            steps {
+                script {
+                    if (env.BRANCH_NAME == 'dev') {
 
-          sh """
-            echo ${DOCKERHUB_PSW} | docker login -u ${DOCKERHUB_USR} --password-stdin
-          """
+                        sh '''
+                          echo "Building DEV image"
+                          echo $DOCKERHUB_CREDS_PSW | docker login -u $DOCKERHUB_CREDS_USR --password-stdin
 
-          if (branch == 'dev') {
-            sh """
-              docker tag ${IMAGE_NAME}:latest kiransuresh12/dev:latest
-              docker push kiransuresh12/dev:latest
-            """
-          } else if (branch == 'main') {
-            sh """
-              docker tag ${IMAGE_NAME}:latest kiransuresh12/prod:latest
-              docker push kiransuresh12/prod:latest
-            """
-          } else {
-            echo "Branch ${branch} not handled"
-          }
+                          chmod +x build/build.sh
+                          cd build
+                          ./build.sh dev
+                        '''
+
+                    } else if (env.BRANCH_NAME == 'main' || env.BRANCH_NAME == 'master') {
+
+                        sh '''
+                          echo "Building PROD image"
+                          echo $DOCKERHUB_CREDS_PSW | docker login -u $DOCKERHUB_CREDS_USR --password-stdin
+
+                          chmod +x build/build.sh
+                          cd build
+                          ./build.sh prod
+                        '''
+
+                    } else {
+                        echo "Branch not handled: ${env.BRANCH_NAME}"
+                    }
+                }
+            }
         }
-      }
-    }
 
-    stage('Deploy') {
-      steps {
-        script {
-          def branch = env.GIT_BRANCH?.replaceFirst(/^origin\\//, '')
+        stage('Deploy') {
+            steps {
+                script {
+                    if (env.BRANCH_NAME == 'dev') {
 
-          if (branch == 'dev') {
-            sh '''
-              chmod +x build/deploy.sh
-              cd build
-              ./deploy.sh dev
-            '''
-          } else if (branch == 'main') {
-            sh '''
-              chmod +x build/deploy.sh
-              cd build
-              ./deploy.sh prod
-            '''
-          } else {
-            echo "Branch ${branch} not handled"
-          }
+                        sh '''
+                          echo "Deploying DEV environment"
+                          chmod +x build/deploy.sh
+                          cd build
+                          ./deploy.sh dev
+                        '''
+
+                    } else if (env.BRANCH_NAME == 'main' || env.BRANCH_NAME == 'master') {
+
+                        sh '''
+                          echo "Deploying PROD environment"
+                          chmod +x build/deploy.sh
+                          cd build
+                          ./deploy.sh prod
+                        '''
+
+                    }
+                }
+            }
         }
-      }
     }
-  }
-
-  post {
-    success {
-      echo "Pipeline completed successfully"
-    }
-    failure {
-      echo "Pipeline failed"
-    }
-  }
 }
