@@ -4,7 +4,6 @@ pipeline {
     environment {
         DOCKERHUB_USER = 'kiransuresh12'
         IMAGE_NAME = 'react-app'
-        ENV = "${env.BRANCH_NAME == 'main' ? 'prod' : 'dev'}"
     }
 
     stages {
@@ -12,6 +11,19 @@ pipeline {
         stage('Checkout') {
             steps {
                 checkout scm
+            }
+        }
+
+        stage('Set Environment') {
+            steps {
+                script {
+                    if (env.BRANCH_NAME == 'main') {
+                        env.DEPLOY_ENV = 'prod'
+                    } else {
+                        env.DEPLOY_ENV = 'dev'
+                    }
+                }
+                echo "Deploying to environment: ${env.DEPLOY_ENV}"
             }
         }
 
@@ -25,7 +37,7 @@ pipeline {
                     sh '''
                         echo "$DOCKER_PASS" | docker login -u "$DOCKER_USER" --password-stdin
                         chmod +x build.sh deploy.sh
-                        ./build.sh $ENV
+                        ./build.sh $DEPLOY_ENV
                     '''
                 }
             }
@@ -34,18 +46,9 @@ pipeline {
         stage('Deploy') {
             steps {
                 sh '''
-                    ./deploy.sh $ENV
+                    ./deploy.sh $DEPLOY_ENV
                 '''
             }
-        }
-    }
-
-    post {
-        success {
-            echo "✅ Deployment successful for environment: $ENV"
-        }
-        failure {
-            echo "❌ Pipeline failed"
         }
     }
 }
