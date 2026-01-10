@@ -1,6 +1,6 @@
 #!/bin/bash
 
-ENV=$1   # dev or prod
+ENV=$1
 
 if [ -z "$ENV" ]; then
   echo "Usage: ./build.sh dev|prod"
@@ -14,9 +14,7 @@ npm install
 npm run build
 
 echo "Building Docker image: $IMAGE_NAME"
-docker build -t $IMAGE_NAME:latest .
+docker build -t $IMAGE_NAME:latest build/
 
 echo "Pushing image to Docker Hub..."
 docker push $IMAGE_NAME:latest
-
-echo "Docker image $IMAGE_NAME pushed successfully"
