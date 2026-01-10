@@ -1,12 +1,12 @@
 #!/bin/bash
+set -e
 
 ENV=$1
-
 if [ -z "$ENV" ]; then
   echo "Usage: ./build.sh dev|prod"
   exit 1
 fi
 
-echo "Building Docker image for $ENV"
+IMAGE="kiransuresh/react-app:${ENV}"
 
-docker build -t react-app:latest .
+docker build -t $IMAGE -f build/Dockerfile .
