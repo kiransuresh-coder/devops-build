@@ -4,17 +4,26 @@ pipeline {
     environment {
         DOCKERHUB_CREDS = credentials('dockerhub-creds')
         DOCKER_USER = 'kiransuresh12'
+        IMAGE_NAME = 'react-app'
     }
 
     stages {
 
         stage('Build Docker Image') {
             steps {
-                sh '''
-                  chmod +x build/build.sh
-                  cd build
-                  ./build.sh
-                '''
+                script {
+                    def branch = env.BRANCH_NAME ?: env.GIT_BRANCH.replace('origin/', '')
+
+                    sh 'chmod +x build/build.sh'
+
+                    if (branch == 'dev') {
+                        sh 'cd build && ./build.sh dev'
+                    } else if (branch == 'main') {
+                        sh 'cd build && ./build.sh prod'
+                    } else {
+                        error "Unsupported branch: ${branch}"
+                    }
+                }
             }
         }
 
@@ -32,15 +41,11 @@ pipeline {
                           docker tag react-app:latest kiransuresh12/react-app-dev:latest
                           docker push kiransuresh12/react-app-dev:latest
                         '''
-                    } 
-                    else if (branch == 'main') {
+                    } else if (branch == 'main') {
                         sh '''
                           docker tag react-app:latest kiransuresh12/react-app-prod:latest
                           docker push kiransuresh12/react-app-prod:latest
                         '''
-                    } 
-                    else {
-                        echo "Branch not supported: ${branch}"
                     }
                 }
             }
@@ -51,18 +56,25 @@ pipeline {
                 script {
                     def branch = env.BRANCH_NAME ?: env.GIT_BRANCH.replace('origin/', '')
 
-                    sh '''
-                      chmod +x build/deploy.sh
-                    '''
+                    sh 'chmod +x build/deploy.sh'
 
                     if (branch == 'dev') {
                         sh 'cd build && ./deploy.sh dev'
-                    } 
-                    else if (branch == 'main') {
+                    } else if (branch == 'main') {
                         sh 'cd build && ./deploy.sh prod'
                     }
                 }
             }
         }
     }
+
+    post {
+        success {
+            echo 'Pipeline completed successfully'
+        }
+        failure {
+            echo 'Pipeline failed'
+        }
+    }
 }
+``
