@@ -9,4 +9,6 @@ fi
 
 IMAGE="kiransuresh/react-app:${ENV}"
 
-docker build -t $IMAGE -f build/Dockerfile .
+echo "Building image: $IMAGE"
+
+docker build -t $IMAGE .
