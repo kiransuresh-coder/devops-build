@@ -8,61 +8,25 @@ pipeline {
 
     stages {
 
+        stage('Checkout') {
+            steps {
+                checkout scm
+            }
+        }
+
         stage('Build Docker Image') {
             steps {
-                sh '''
-                  chmod +x build/build.sh
-                  cd build
-                  ./build.sh
-                '''
-            }
-        }
-
-        stage('Push to Docker Hub') {
-            steps {
                 script {
+                    // Determine branch/environment
                     def branch = env.BRANCH_NAME ?: env.GIT_BRANCH.replace('origin/', '')
-
-                    sh '''
-                      echo $DOCKERHUB_CREDS_PSW | docker login -u $DOCKERHUB_CREDS_USR --password-stdin
-                    '''
-
+                    def envArg
                     if (branch == 'dev') {
-                        sh '''
-                          docker tag react-app:latest kiransuresh12/react-app-dev:latest
-                          docker push kiransuresh12/react-app-dev:latest
-                        '''
-                    } 
-                    else if (branch == 'main') {
-                        sh '''
-                          docker tag react-app:latest kiransuresh12/react-app-prod:latest
-                          docker push kiransuresh12/react-app-prod:latest
-                        '''
-                    } 
-                    else {
-                        echo "Branch not supported: ${branch}"
+                        envArg = 'dev'
+                    } else if (branch == 'main') {
+                        envArg = 'prod'
+                    } else {
+                        error "Branch not supported: ${branch}"
                     }
-                }
-            }
-        }
 
-        stage('Deploy') {
-            steps {
-                script {
-                    def branch = env.BRANCH_NAME ?: env.GIT_BRANCH.replace('origin/', '')
-
-                    sh '''
-                      chmod +x build/deploy.sh
-                    '''
-
-                    if (branch == 'dev') {
-                        sh 'cd build && ./deploy.sh dev'
-                    } 
-                    else if (branch == 'main') {
-                        sh 'cd build && ./deploy.sh prod'
-                    }
-                }
-            }
-        }
-    }
-}
+                    // Build the Docker image
+                    sh """
